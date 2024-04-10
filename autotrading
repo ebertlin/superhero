@@ -1,0 +1,43 @@
+import requests
+import time
+import hmac
+import hashlib
+
+# 交易所API端點
+API_URL = 'https://api.your-exchange.com'
+
+# 你的API密鑰和密碼
+API_KEY = 'your_api_key'
+API_SECRET = 'your_api_secret'
+
+# 創建簽名的函數
+def create_signature(api_secret, params):
+    post_data = params.encode()
+    return hmac.new(api_secret.encode(), post_data, hashlib.sha256).hexdigest()
+
+# 創建下單的函數
+def place_order(symbol, quantity, price, side):
+    params = {
+        'symbol': symbol,
+        'quantity': quantity,
+        'price': price,
+        'side': side, # 'buy' or 'sell'
+        'type': 'limit', # 'limit' or 'market'
+        'timestamp': int(time.time() * 1000)
+    }
+
+    # 加入簽名
+    params['signature'] = create_signature(API_SECRET, str(params))
+
+    # 發送請求
+    response = requests.post(f"{API_URL}/order", headers={
+        'X-MBX-APIKEY': API_KEY
+    }, data=params)
+
+    return response.json()
+
+# 這裡是調用下單函數的地方
+order_response = place_order('BTCUSD', 0.001, 50000, 'buy')
+print(order_response)
+
+# 檢查訂單狀態，處理錯誤等
